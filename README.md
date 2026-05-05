@@ -12,14 +12,14 @@ python3 main.py
 ## Demo Features
 Our code creates 5 Chord peers along with node IDs, successors, predecessors, and finger tables. Our code uses DFS file creation and appends operations. Our code demonstrates reading a distributed file, sorting of 100 records, and it shows how Paxos operations work such as ACCEPT, LEARN, and commit messages. It also shows a simulated follower crash during replication and how it continues the correct operation after failure. Our code finsihes by doing a final cleanup of files.
 
-### Chord Layer (Simplified)
+### Chord Layer
 - A ring of 5 nodes is created
 - Each node has:
-  - `node_id`
+  - node_id
   - local key-value storage
   - successor and predecessor
 - Keys are routed to the responsible node using:
-  - `locate_successor(key)`
+  - locate_successor(key)
 
 ### DFS Layer
 - Metadata and pages are stored in the DHT
