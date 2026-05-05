@@ -45,7 +45,7 @@ This project includes a simplified Paxos-style protocol to coordinate replicated
 The system supports distributed sorting of files containing records in the format (key,value).
 The sorting workflow is:
 1. Read the input file from the DFS
-2. Parse records into `(key, value)` pairs
+2. Parse records into (key, value) pairs
 3. Route each record to a responsible node
 4. Sort records locally at each node
 5. Combine the results into a globally sorted output file
