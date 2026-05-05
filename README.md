@@ -1,15 +1,16 @@
 # Distributed File System (DFS) over Chord
-
 This project implements a simplified Distributed File System (DFS) built on top of a Chord-like Distributed Hash Table (DHT).
 
 ## Overview
-The system extends a Chord-style key-value store into a file system by separating:
-Each file is distributed across multiple nodes using deterministic hashing.
+The system extends a Chord-style key-value store into a file system by separating metadata and file content. Each file is distributed across multiple nodes using deterministic hashing.
 
 ## Run
 ```bash
 python3 main.py
 ```
+
+## Demo Features
+Our code creates 5 Chord peers along with node IDs, successors, predecessors, and finger tables. Our code uses DFS file creation and appends operations. Our code demonstrates reading a distributed file, sorting of 100 records, and it shows how Paxos operations work such as ACCEPT, LEARN, and commit messages. It also shows a simulated follower crash during replication and how it continues the correct operation after failure. Our code finsihes by doing a final cleanup of files.
 
 ### Chord Layer (Simplified)
 - A ring of 5 nodes is created
@@ -38,7 +39,7 @@ The following API is implemented:
 - `distributed_sort_file(input_filename, output_filename)` → sorts records of the form `key,value` and stores the sorted result as a new DFS file
 
 ## Paxos Replication
-This project includes a simplified Paxos-style replication layer for DFS updates. A leader proposes an operation with a sequence number. The replicas receive ACCEPT messages, and then LEARN messages. Once a majority confirms the operation, the update is committed and applied in the same order across replicas. In our implementation, replicated writes are used during file page storage, and Paxos commit messages are printed during execution for debugging.
+This project includes a simplified Paxos-style protocol to coordinate replicated DFS updates. A leader first proposes an operation with a sequence number. The replicas then receive ACCEPT messages, and then LEARN messages. Once a majority confirms the operation, the update is committed and applied in the same order across replicas. Replication is performed with a replication factor of 3 using successor-based placement in the Chord ring. We used Paxos to coordinate the metadata updates after file creation and append, after sorting, and during deletion. During execution, Paxos messages and commit decisions are printed to demonstrate agreement and ordering.
 
 ## Distributed Sorting
 The system supports distributed sorting of files containing records in the format (key,value).
@@ -49,6 +50,10 @@ The sorting workflow is:
 4. Sort records locally at each node
 5. Combine the results into a globally sorted output file
 6. Store the result as a new DFS file
+Records are first partitioned across nodes based on key hashing, sorted locally, and then combined into a globally sorted output file.
+
+## Failure Demonstration
+The system simulates a follower crash by marking one node as inactive. While on node is inactive, the ACCEPT and LEARN messages to the failed node are dropped.Paxos still reaches a majority using the remaining replicas. The operation is committed successfully using Paxos. This demonstrates that the system maintains correctness under crash failures.
 
 ### Metadata Object
 ```json
