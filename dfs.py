@@ -13,6 +13,7 @@ class Node:
         self.successor = None
         self.predecessor = None
         self.paxos_log = []
+        self.alive = True
 
 class ChordRing:
     def __init__(self, num_nodes=5):
@@ -26,6 +27,18 @@ class ChordRing:
         for i, node in enumerate(self.nodes):
             node.successor = self.nodes[(i + 1) % len(self.nodes)]
             node.predecessor = self.nodes[(i - 1) % len(self.nodes)]
+
+    def show_ring(self):
+        print("\nChord Ring:")
+        for i, node in enumerate(self.nodes):
+            print(f"Node {i}")
+            print(f"  ID: {node.node_id}")
+            print(f"  Predecessor: {node.predecessor.node_id}")
+            print(f"  Successor: {node.successor.node_id}")
+            print("  Finger table:")
+            for j in range(3):
+                finger = self.nodes[(i + (2 ** j)) % len(self.nodes)]
+                print(f"    finger[{j}] -> {finger.node_id}")
 
     def locate_successor(self, key: str):
         key_int = int(key, 16)
@@ -150,6 +163,8 @@ class DFS:
         metadata = self._get_metadata(filename)
         for page in metadata["pages"]:
             self.chord.delete(page["guid"])
+        metadata_delete_key = self.metadata_key(filename)
+        self.paxos_propose(metadata_delete_key, b"__DELETE_METADATA__")
         self.chord.delete(self.metadata_key(filename))
         directory = self._get_directory()
         if filename in directory:
@@ -199,11 +214,20 @@ class DFS:
         self.append(sorted_filename, temp_file)
 
     def accept(self, node, o, t):
+        if not node.alive:
+            print(f"ACCEPT dropped: node {node.node_id} is crashed")
+            return False
         node.paxos_log.append(("Accept", t, o))
+        print(f"ACCEPT: leader proposes seq={t} to node={node.node_id}")
         return True
 
     def learn(self, node, o, t):
+        if not node.alive:
+            print(f"LEARN dropped: node {node.node_id} is crashed")
+            return False
+
         node.paxos_log.append(("Learn", t, o))
+        print(f"LEARN: node={node.node_id} learned seq={t}")
         return True
     
     def paxos_propose(self, key, value):
